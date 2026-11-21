@@ -4,7 +4,10 @@ from pathlib import Path
 
 repo_root = Path(__file__).resolve().parent.parent
 parser = argparse.ArgumentParser(description="Build the main or experimental userscript")
-parser.add_argument("--source", type=Path, default=repo_root.parent / "userScript.js")
+default_source = repo_root / "scripts" / "userScript.js"
+if not default_source.exists():
+    default_source = repo_root.parent / "userScript.js"
+parser.add_argument("--source", type=Path, default=default_source)
 parser.add_argument("--output", type=Path, default=repo_root / "u.js")
 parser.add_argument("--variant", choices=("main", "experimental"), required=True,
                     help="Explicitly select the variant to keep experimental live code out of main")
