@@ -48,6 +48,19 @@ header = """// TizenTube Cobalt L1 - honest per-format capability and bitrate po
             return origChangeType.call(this, normalizeMime(mime));
         };
     }
+    try {
+        if (!localStorage.getItem('tt-default-balanced-v214')) {
+            localStorage.setItem('tt-default-balanced-v214', '1');
+            var rawCfg = localStorage.getItem('ytaf-configuration');
+            if (rawCfg) {
+                var parsedCfg = JSON.parse(rawCfg);
+                if (parsedCfg && (!parsedCfg.liveLatencyProfile || parsedCfg.liveLatencyProfile === 'low')) {
+                    parsedCfg.liveLatencyProfile = 'balanced';
+                    localStorage.setItem('ytaf-configuration', JSON.stringify(parsedCfg));
+                }
+            }
+        }
+    } catch (_) {}
     if (window.navigator && navigator.mediaCapabilities && typeof navigator.mediaCapabilities.decodingInfo === 'function') {
         var origDecodingInfo = navigator.mediaCapabilities.decodingInfo.bind(navigator.mediaCapabilities);
         navigator.mediaCapabilities.decodingInfo = function(cfg) {
@@ -78,10 +91,10 @@ quality_action_target = 'function ho(e,t){switch(e){'
 assert code.count(quality_action_target) == 1, "custom action dispatcher must match once"
 code = code.replace(quality_action_target, quality_action_target + 'case"TT_QUALITY_SELECT":if(window.__ttQualityController)window.__ttQualityController.select(t.videoId,t.id);break;', 1)
 
-code = code.replace('preferredVideoQuality:"auto"', 'preferredVideoQuality:"2160p",maxAv1BitrateMbps:"40",maxOtherBitrateMbps:"100",liveLatencyProfile:"low",liveDropProtection:!0,liveAutoCatchupOnResume:!0', 1)
+code = code.replace('preferredVideoQuality:"auto"', 'preferredVideoQuality:"2160p",maxAv1BitrateMbps:"40",maxOtherBitrateMbps:"100",liveLatencyProfile:"balanced",liveDropProtection:!0,liveAutoCatchupOnResume:!0', 1)
 
 codec_menu_target = 'options:["any","vp9","av01","avc1"].map(e=>({name:"any"===e?ga("settings.options.videoPlayer.options.codecAny"):e.toUpperCase(),key:"preferredVideoCodec",value:e}))}'
-codec_menu_replacement = codec_menu_target + ',{name:"Limite máximo de bitrate (AV1)",icon:"VIDEO_QUALITY",value:null,menuId:"tt-max-av1-bitrate",menuHeader:{title:"Limite máximo de bitrate (AV1)",subtitle:"Define o teto para AV1 (padrão: 40 Mbps)"},options:["20","30","40","60","100","unlimited"].map(e=>({name:"unlimited"===e?"Sem limite":`${e} Mbps`+("40"===e?" (Padrão)":""),key:"maxAv1BitrateMbps",value:e}))},{name:"Limite máximo de bitrate (VP9/AVC/HEVC)",icon:"VIDEO_QUALITY",value:null,menuId:"tt-max-other-bitrate",menuHeader:{title:"Limite máximo de bitrate (VP9/AVC/HEVC)",subtitle:"Define o teto para VP9, H.264/AVC, H.265/HEVC e outros (padrão: 100 Mbps)"},options:["45","60","80","100","120","150","unlimited"].map(e=>({name:"unlimited"===e?"Sem limite":`${e} Mbps`+("100"===e?" (Padrão)":""),key:"maxOtherBitrateMbps",value:e}))},{name:"Modo Ao Vivo (Latência)",icon:"SPEED",value:null,menuId:"tt-live-latency-profile",menuHeader:{title:"Modo Ao Vivo (Latência)",subtitle:"Controla o atraso e o buffer em transmissões ao vivo"},options:[{id:"low",label:"Baixa Latência (Padrão)"},{id:"balanced",label:"Equilibrado (Mais estável)"},{id:"off",label:"Padrão do YouTube (Desligado)"}].map(o=>({name:o.label,key:"liveLatencyProfile",value:o.id}))},{name:"Proteção contra perda de quadros (Lives)",icon:"VIDEO_QUALITY",value:"liveDropProtection"},{name:"Retorno automático ao vivo (PiP/Pause)",icon:"SPEED",value:"liveAutoCatchupOnResume"}'
+codec_menu_replacement = codec_menu_target + ',{name:"Limite máximo de bitrate (AV1)",icon:"VIDEO_QUALITY",value:null,menuId:"tt-max-av1-bitrate",menuHeader:{title:"Limite máximo de bitrate (AV1)",subtitle:"Define o teto para AV1 (padrão: 40 Mbps)"},options:["20","30","40","60","100","unlimited"].map(e=>({name:"unlimited"===e?"Sem limite":`${e} Mbps`+("40"===e?" (Padrão)":""),key:"maxAv1BitrateMbps",value:e}))},{name:"Limite máximo de bitrate (VP9/AVC/HEVC)",icon:"VIDEO_QUALITY",value:null,menuId:"tt-max-other-bitrate",menuHeader:{title:"Limite máximo de bitrate (VP9/AVC/HEVC)",subtitle:"Define o teto para VP9, H.264/AVC, H.265/HEVC e outros (padrão: 100 Mbps)"},options:["45","60","80","100","120","150","unlimited"].map(e=>({name:"unlimited"===e?"Sem limite":`${e} Mbps`+("100"===e?" (Padrão)":""),key:"maxOtherBitrateMbps",value:e}))},{name:"Modo Ao Vivo (Latência)",icon:"SPEED",value:null,menuId:"tt-live-latency-profile",menuHeader:{title:"Modo Ao Vivo (Latência)",subtitle:"Controla o atraso e o buffer em transmissões ao vivo"},options:[{id:"balanced",label:"Equilibrado (Mais estável)"},{id:"low",label:"Baixa Latência"},{id:"off",label:"Padrão do YouTube (Desligado)"}].map(o=>({name:o.label,key:"liveLatencyProfile",value:o.id}))},{name:"Proteção contra perda de quadros (Lives)",icon:"VIDEO_QUALITY",value:"liveDropProtection"},{name:"Retorno automático ao vivo (PiP/Pause)",icon:"SPEED",value:"liveAutoCatchupOnResume"}'
 assert codec_menu_target in code, "codec_menu_target not found in userScript.js"
 code = code.replace(codec_menu_target, codec_menu_replacement, 1)
 
@@ -195,7 +208,7 @@ exp_stage1 = r"""
   }
 
   function getLiveConfig() {
-    var res = { profile: 'low', dropProtection: true, autoCatchupOnResume: true };
+    var res = { profile: 'balanced', dropProtection: true, autoCatchupOnResume: true };
     try {
       var raw = localStorage.getItem('ytaf-configuration');
       if (raw) {
@@ -726,9 +739,9 @@ exp_stage1 = r"""
     var lc = state.lastLatencyClass || 'NORMAL';
     var sd = state.lastSegDur || 5;
     var isBalanced = liveCfg.profile === 'balanced';
-    var safeBh = isBalanced ? 4.5 : 3.0;
-    var entryBh = isBalanced ? 6.0 : 4.2;
-    var targetLl = isBalanced ? 6.5 : 4.8;
+    var safeBh = isBalanced ? 3.8 : 3.0;
+    var entryBh = isBalanced ? 5.0 : 4.2;
+    var targetLl = isBalanced ? 5.5 : 4.8;
     if (lc.indexOf('ULTRA') >= 0 || sd <= 1.5) {
       safeBh = isBalanced ? 1.4 : 0.9;
       entryBh = isBalanced ? 2.2 : 1.5;

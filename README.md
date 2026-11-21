@@ -5,21 +5,20 @@
     <br>
 </p>
 
-Fork customizado do [TizenTubeCobalt](https://github.com/reisxd/TizenTubeCobalt) (base **Google Cobalt `27.lts.10` `qa`**, Starboard 18), otimizado para TVs Android/Google TV com SoC **MediaTek MT5896 / Pentonic 700** (como a **TCL C7K**) entregarem **4K (`2160p60 HDR10`)**, seleção multi-codec e **baixa latência em lives** sem travamentos.
+Cliente YouTube TV sobre **Google Cobalt `27.lts.10` `qa`** (Starboard 18), otimizado para TVs Android/Google TV com SoC **MediaTek MT5896 / Pentonic 700** (como a **TCL C7K**) entregarem **4K (`2160p60 HDR10`)**, seleção multi-codec com marcação em tempo real e **baixa latência estável em lives** — com interface 100% em Português Brasileiro.
 
 ---
 
-## ✨ Melhorias implementadas no TubeRush (`v2.0.5`)
+## ✨ Melhorias implementadas no TubeRush (`v2.1.4`)
 
-### 1. 📦 Identidade própria e convivência lado a lado
-- **App principal:** **TubeRush** (`io.gh.heliummarcos.tizentube.cobalt`)
-- **App experimental:** **TubeRush Exp** (`io.gh.heliummarcos.tizentube.exp_l1`)
-- Ícone, banner e splash oficiais do YouTube TV, convivendo sem conflito com o TizenTube original.
-- **Updater próprio:** checagem de atualizações apontando diretamente para `HeliumMarcos/TubeRush` (`releases/latest`), compatível com tags `vX.Y.Z-c7k-l1`.
+### 1. 📦 Identidade própria, Tradução PT-BR Completa e Updater Integrado
+- **App unificado:** **TubeRush** (`io.gh.heliummarcos.tizentube.cobalt`) com ícone, banner e splash oficiais do YouTube TV.
+- **100% em Português Brasileiro:** todos os menus do TubeRush, configurações do reprodutor, interface e gerenciador de atualizações traduzidos quando a TV/app está em `pt-BR`.
+- **TubeRush Updater:** busca e instala atualizações diretamente de `HeliumMarcos/TubeRush` (`releases/latest`), com `versionName` e `versionCode` sincronizados.
 
 ### 2. 🎛️ Menu de Qualidade Multi-Codec & Seleção Visual Inteligente (`effectiveBitrate`)
 - **Codecs simultâneos:** exibe na mesma lista faixas reais descobertas de **AV1**, **VP9** e **AVC/H.264** para cada resolução (`2160p`, `1440p`, `1080p`, etc.) em layout limpo de duas linhas (resolução/HDR/FPS + codec/Mbps/status).
-- **Marcação imediata (`✓`):** acompanha corretamente a faixa/codec ativa mesmo ao trocar de qualidade durante a reprodução.
+- **Marcação imediata (`✓`):** acompanha e atualiza instantaneamente a faixa/codec em reprodução ao alternar qualidade durante o vídeo ou live.
 - **Hierarquia automática por qualidade visual real:**
   1. Maior resolução (`height`)
   2. Maior taxa de quadros (`fps`)
@@ -28,23 +27,27 @@ Fork customizado do [TizenTubeCobalt](https://github.com/reisxd/TizenTubeCobalt)
      - **VOD:** `AV1 × 1.70`, `VP9/HEVC × 1.35`, `AVC × 1.00`
      - **Live:** `AV1 × 1.50`, `VP9/HEVC × 1.25`, `AVC × 1.00`
 
-### 3. 🔓 Desbloqueio 4K60 HDR, SABR e Fallback VP9 autenticado
-- **Limites reais de hardware:** filtro por `averageBitrate` (padrão **AV1 ≤ 100 Mbps**, **demais ≤ 150 Mbps**, teto de pico sintético protegido) + clamp seguro apenas em probes sintéticos de `isTypeSupported` / `decodingInfo` (`35M–250M → 35M`), mantendo `CP.BITRATE` (`2E9`) e `maxBitrateBps` intactos.
-- **Fallback VP9 autenticado (`WEB` / `TVHTML5_SIMPLY`):** quando a sessão TV não traz VP9 em `2160p`/`1440p`/`1080p`, busca metadados suplementares autenticados com PO token sem interromper a reprodução atual, habilitando a troca manual no menu.
-- **Suporte completo a Lives:** fallback para `bitrate` quando `averageBitrate` está ausente e normalização de perfis `vp9.2`.
+### 3. 🔴 Controle Inteligente de Latência ao Vivo & Estabilidade
+- **Modo Ao Vivo (Latência) no menu do Reprodutor:**
+  - **Equilibrado (Mais estável) — *Pré-selecionado por padrão*:** mantém o buffer enxuto (~3,8–5,0 s em `Normal Latency` e ~2,2 s em `Low Latency`) com aceleração adaptativa suave (`1.06x–1.15x` com preservação de tom) e salto em RAM apenas em atrasos grandes, garantindo baixa latência sem micro-travamentos.
+  - **Baixa Latência:** perfil mais agressivo para menor atraso possível com a borda ao vivo.
+  - **Padrão do YouTube (Desligado):** desativa o controlador e mantém o buffer nativo do YouTube.
+- **Proteção contra perda de quadros (Lives):** monitora `droppedVideoFrames` após a estabilização inicial e desce automaticamente 1 nível de qualidade se detectar sobrecarga sustentada de decodificação (`>= 15%`).
+- **Retorno automático ao vivo (PiP/Pause):** reposiciona a transmissão próximo ao ponto ao vivo ao despausar (após `>= 8 s`) ou sair do Mini Player / PiP.
+- **Flags Proxima/SABR:** ativa `html5_enable_proxima`, `html5_sabr_force_proxima`, `yt-player-proxima-pref`, pré-aquecimento de `yt-player-bandwidth` e `<link rel="preconnect">`.
 
-### 4. ⚡ Otimizações Nativas do Cobalt (Etapa 2) + Baixa Latência em Lives (Etapa 1)
-- **Flags nativas (`JavaSwitches` & `MediaCodecBridge`):**
-  - `EnableQUIC` ativo (remove `--disable-quic`)
-  - `DisableLowEndDeviceMode` ativo (remove `--enable-low-end-device-mode`)
+### 4. 🔓 Desbloqueio 4K60 HDR, SABR e Otimizações Nativas do Cobalt
+- **Limites reais de hardware configuráveis no menu:** teto ajustável para **AV1** (padrão: `40 Mbps`) e **VP9/AVC/HEVC** (padrão: `100 Mbps`) + clamp seguro em probes sintéticos de `isTypeSupported` / `decodingInfo` (`35M–250M → 35M`).
+- **Fallback VP9 autenticado (`WEB` / `TVHTML5_SIMPLY`):** busca metadados suplementares autenticados com PO token sem interromper a reprodução quando a sessão TV omite faixas VP9 em `2160p`/`1440p`/`1080p`.
+- **Otimizações nativas (`JavaSwitches` & `MediaCodecBridge`):**
+  - `EnableQUIC` e `DisableLowEndDeviceMode` ativos
   - `ForceGpuMemAvailableMb = 256` MB e `V8MaxOldSpaceSize = 768` MB
   - `CobaltDynamicMojoPipeSizing` ampliado (`media_size = 2 MB`, `subresource_size = 512 KB`) + `CobaltBypassResourceLoadScheduler`
-  - `MediaFormat.KEY_LOW_LATENCY = 1` em `MediaCodecBridge.configureVideo` quando suportado pelo decoder (`c2.mtk.av1.decoder`, `c2.mtk.vp9.decoder`, `c2.mtk.avc.decoder`)
-- **Camada Web/Live (`TubeRush Exp`):** flags `Proxima` / Ultra-Low Latency (`html5_enable_proxima`, `html5_sabr_force_proxima`, etc.), pré-aquecimento de `yt-player-bandwidth` e `<link rel="preconnect">`, além de Auto-Catch-Up adaptativo com salto à borda em atraso severo.
+  - `MediaFormat.KEY_LOW_LATENCY = 1` em `MediaCodecBridge.configureVideo` quando suportado pelos decoders MediaTek (`c2.mtk.av1.decoder`, `c2.mtk.vp9.decoder`, `c2.mtk.avc.decoder`)
 
 ---
 
-## 🛠️ Recursos originais preservados
+## 🛠️ Recursos Adicionais Integrados
 
 - 🛑 **Ad Blocker**
 - ❗ **SponsorBlock**
@@ -55,9 +58,9 @@ Fork customizado do [TizenTubeCobalt](https://github.com/reisxd/TizenTubeCobalt)
 
 ## ⬇️ Download (Releases Oficiais)
 
-- 👉 **[TubeRush `v2.0.5-c7k-l1` — Releases](https://github.com/HeliumMarcos/TubeRush/releases/latest)**
+- 👉 **[TubeRush `v2.1.4-c7k-l1` — Releases](https://github.com/HeliumMarcos/TubeRush/releases/latest)**
 
-> 💡 **Arquitetura:** `armeabi-v7a` (`qa`), validado na **TCL C7K (Android 14 / MT5896)** em `2160p60 HDR10` e lives `1440p60` com baixa latência.
+> 💡 **Arquitetura:** `armeabi-v7a` (`qa`), validado na **TCL C7K (Android 14 / MT5896)** em `2160p60 HDR10` e transmissões ao vivo com baixa latência e estabilidade.
 
 ## ❓ Como instalar
 
@@ -69,8 +72,6 @@ Fork customizado do [TizenTubeCobalt](https://github.com/reisxd/TizenTubeCobalt)
 
 ## 🙏 Créditos e Estrutura do Repositório
 
-- **Branch `main`:** código principal do **TubeRush** (`u.js`, `cobalt/`, `starboard/`, `scripts/`, `docs/`, `.github/` e `README.md`).
-- **Branch `exp/low-latency`:** experimentos de baixa latência em lives (`TubeRush Exp`).
-- **Branch `cobalt-full`:** árvore completa do monorepo Chromium/Cobalt para compilações C++ nativas.
-- Projeto base: [reisxd/TizenTubeCobalt](https://github.com/reisxd/TizenTubeCobalt) e [TizenTube](https://github.com/reisxd/TizenTube)
-- Motor: [Google Cobalt (`27.lts.10`)](https://cobalt.dev)
+- **Branch `main`:** código principal unificado do **TubeRush** (`u.js`, `cobalt/`, `starboard/`, `scripts/`, `docs/`, `.github/` e `README.md`), com CI automatizado (`52/52` testes unitários + purge jsDelivr).
+- **Branch `cobalt-full`:** árvore original completa do monorepo Chromium/Cobalt para compilações C++ nativas.
+- Desenvolvido e mantido por **Helium Marcos (L1)** — baseado no motor [Google Cobalt (`27.lts.10`)](https://cobalt.dev).
