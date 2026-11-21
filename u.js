@@ -1314,6 +1314,9 @@ var e,t,i="function"==typeof Symbol?Symbol:{},n=i.iterator||"@@iterator",a=i.toS
     if (!isFinite(ll) && isFinite(bh)) {
       ll = bh + Math.min(state.lastSegDur || 5, 2.5);
     }
+    if (isFinite(bh) && isFinite(ll) && ll < bh) {
+      ll = bh + 1.0;
+    }
     state.lastLl = isFinite(ll) ? Math.round(ll * 100) / 100 : null;
     state.lastBh = isFinite(bh) ? Math.round(bh * 100) / 100 : null;
 
@@ -1390,9 +1393,9 @@ var e,t,i="function"==typeof Symbol?Symbol:{},n=i.iterator||"@@iterator",a=i.toS
     var lc = state.lastLatencyClass || 'NORMAL';
     var sd = state.lastSegDur || 5;
     var isBalanced = liveCfg.profile === 'balanced';
-    var safeBh = isBalanced ? 3.5 : 1.8;
-    var entryBh = isBalanced ? 5.0 : 2.6;
-    var targetLl = isBalanced ? 5.5 : 3.0;
+    var safeBh = isBalanced ? 4.2 : 2.8;
+    var entryBh = isBalanced ? 5.5 : 3.6;
+    var targetLl = isBalanced ? 6.0 : 4.2;
     if (lc.indexOf('ULTRA') >= 0 || sd <= 1.5) {
       safeBh = isBalanced ? 1.4 : 0.9;
       entryBh = isBalanced ? 2.2 : 1.5;
@@ -1421,9 +1424,10 @@ var e,t,i="function"==typeof Symbol?Symbol:{},n=i.iterator||"@@iterator",a=i.toS
         restoreBaseRate(v, 'in-buffer-jump');
         try {
           var baseCt = v.currentTime || 0;
+          var landBh = safeBh + 0.7;
           var targetCt = baseCt + jumpSec;
-          if (isFinite(bufEnd) && targetCt > bufEnd - safeBh) {
-            targetCt = Math.max(baseCt, bufEnd - safeBh);
+          if (isFinite(bufEnd) && targetCt > bufEnd - landBh) {
+            targetCt = Math.max(baseCt, bufEnd - landBh);
           }
           if (targetCt > baseCt + 1.0) {
             v.currentTime = targetCt;

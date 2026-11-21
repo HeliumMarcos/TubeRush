@@ -58,7 +58,7 @@ new2 = new2 + b"\x00" * (SLOT_2_LEN - len(new2))
 
 pat1 = re.compile(rb"https://cdn\.jsdelivr\.net/gh/HeliumMarcos/TubeRush@[^/]+/u\.js\?v=\x00*")
 pat2 = re.compile(rb"https://cdn\.jsdelivr\.net/gh/HeliumMarcos/TubeRush@[^/]+/u\.js(?!\?v=)\x00*")
-ver_pat = re.compile(rb"2\x00\.\x000\x00\.\x00[0-9]\x00")
+ver_pat = re.compile(rb"2\x00\.\x00[0-9]\x00\.\x00[0-9]\x00")
 
 apk_path = args.apk
 unaligned = str(apk_path) + ".unaligned"
@@ -69,11 +69,13 @@ with zipfile.ZipFile(apk_path, "r") as zin, zipfile.ZipFile(unaligned, "w") as z
         data = zin.read(item.filename)
         if item.filename == "lib/armeabi-v7a/libchrobalt.so":
             m1 = pat1.search(data)
-            assert m1 and len(m1.group(0)) == SLOT_1_LEN, f"Slot 1 match error: {m1}"
-            data = data[:m1.start()] + new1 + data[m1.end():]
+            assert m1 and len(new1) <= len(m1.group(0)), f"Slot 1 match error: {m1}"
+            p1 = new1 + b"\x00" * (len(m1.group(0)) - len(new1))
+            data = data[:m1.start()] + p1 + data[m1.end():]
             m2 = pat2.search(data)
-            assert m2 and len(m2.group(0)) == SLOT_2_LEN, f"Slot 2 match error: {m2}"
-            data = data[:m2.start()] + new2 + data[m2.end():]
+            assert m2 and len(new2) <= len(m2.group(0)), f"Slot 2 match error: {m2}"
+            p2 = new2 + b"\x00" * (len(m2.group(0)) - len(new2))
+            data = data[:m2.start()] + p2 + data[m2.end():]
         elif item.filename == "AndroidManifest.xml":
             old_ver_m = ver_pat.search(data)
             assert old_ver_m, "versionName UTF-16LE pattern not found"
@@ -82,8 +84,8 @@ with zipfile.ZipFile(apk_path, "r") as zin, zipfile.ZipFile(unaligned, "w") as z
             data = data.replace(old_ver_m.group(0), new_ver_b)
 
             vc_pat = re.compile(rb"\xff\xff\xff\xff\x08\x00\x00\x10(.{4})", re.DOTALL)
-            vc_matches = list(vc_pat.finditer(data))
-            assert len(vc_matches) == 1, f"Expected 1 versionCode attr, found {len(vc_matches)}"
+            vc_matches = [m for m in vc_pat.finditer(data) if 200 <= struct.unpack("<I", m.group(1))[0] <= 999]
+            assert len(vc_matches) == 1, f"Expected 1 versionCode attr in [200..999], found {len(vc_matches)}"
             m = vc_matches[0]
             old_vc = struct.unpack("<I", m.group(1))[0]
             data = data[:m.start(1)] + struct.pack("<I", args.version_code) + data[m.end(1):]
