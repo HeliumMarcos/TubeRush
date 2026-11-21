@@ -595,8 +595,11 @@ exp_stage1 = r"""
     lastTimeUpdateTime = v.currentTime || 0;
 
     if (Date.now() - lastRebufferAt < 8000) {
-      restoreBaseRate(v, 'rebuffer-cooldown');
-      return;
+      var curBhCheck = state.lastBh;
+      if (curBhCheck === null || curBhCheck < 4.0) {
+        restoreBaseRate(v, 'rebuffer-cooldown');
+        return;
+      }
     }
 
     var liveCfg = getLiveConfig();
@@ -653,15 +656,17 @@ exp_stage1 = r"""
     }
 
     try {
-      var dbgEl = document.getElementById('tt-live-dbg');
-      if (!dbgEl && document.body) {
-        dbgEl = document.createElement('div');
-        dbgEl.id = 'tt-live-dbg';
-        dbgEl.style.cssText = 'position:fixed;left:24px;bottom:24px;z-index:999999;background:rgba(0,0,0,0.82);color:#7fff7f;font:18px/1.3 monospace;padding:8px 12px;border-radius:6px;pointer-events:none;';
-        document.body.appendChild(dbgEl);
-      }
-      if (dbgEl) {
-        dbgEl.textContent = 'TTLive ' + state.version + ' | ps=' + pState + ' live=' + isLive + ' lc=' + state.lastLatencyClass + ' ll=' + state.lastLl + ' bh=' + state.lastBh + ' rate=' + (v.playbackRate || 1) + ' r=' + state.lastReason + ' act=' + state.catchupActivations + ' j=' + (state.jumps || 0);
+      if (localStorage.getItem('tt-live-debug') === '1') {
+        var dbgEl = document.getElementById('tt-live-dbg');
+        if (!dbgEl && document.body) {
+          dbgEl = document.createElement('div');
+          dbgEl.id = 'tt-live-dbg';
+          dbgEl.style.cssText = 'position:fixed;left:24px;bottom:24px;z-index:999999;background:rgba(0,0,0,0.82);color:#7fff7f;font:18px/1.3 monospace;padding:8px 12px;border-radius:6px;pointer-events:none;';
+          document.body.appendChild(dbgEl);
+        }
+        if (dbgEl) {
+          dbgEl.textContent = 'TTLive ' + state.version + ' | ps=' + pState + ' live=' + isLive + ' lc=' + state.lastLatencyClass + ' ll=' + state.lastLl + ' bh=' + state.lastBh + ' rate=' + (v.playbackRate || 1) + ' r=' + state.lastReason + ' act=' + state.catchupActivations + ' j=' + (state.jumps || 0);
+        }
       }
     } catch (_) {}
 
