@@ -58,7 +58,7 @@ new2 = new2 + b"\x00" * (SLOT_2_LEN - len(new2))
 
 pat1 = re.compile(rb"https://cdn\.jsdelivr\.net/gh/HeliumMarcos/TubeRush@[^/]+/u\.js\?v=\x00*")
 pat2 = re.compile(rb"https://cdn\.jsdelivr\.net/gh/HeliumMarcos/TubeRush@[^/]+/u\.js(?!\?v=)\x00*")
-ver_pat = re.compile(rb"(?:2\.\x000\.\x00\d\x00)")
+ver_pat = re.compile(rb"2\x00\.\x000\x00\.\x00[0-9]\x00")
 
 apk_path = args.apk
 unaligned = str(apk_path) + ".unaligned"
