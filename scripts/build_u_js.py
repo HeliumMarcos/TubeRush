@@ -753,17 +753,15 @@ exp_stage1 = r"""
         pendingResumeCatchup = false;
         restoreBaseRate(v, 'in-buffer-jump');
         try {
-          var baseCt = (typeof p.getCurrentTime === 'function' ? p.getCurrentTime() : (v.currentTime || 0));
+          var baseCt = v.currentTime || 0;
           var targetCt = baseCt + jumpSec;
           if (isFinite(bufEnd) && targetCt > bufEnd - safeBh) {
             targetCt = Math.max(baseCt, bufEnd - safeBh);
           }
-          if (typeof p.seekTo === 'function') {
-            p.seekTo(targetCt, true);
-          } else {
+          if (targetCt > baseCt + 1.0) {
             v.currentTime = targetCt;
+            state.jumps = (state.jumps || 0) + 1;
           }
-          state.jumps = (state.jumps || 0) + 1;
         } catch (_) {}
         return;
       }
