@@ -1393,9 +1393,9 @@ var e,t,i="function"==typeof Symbol?Symbol:{},n=i.iterator||"@@iterator",a=i.toS
     var lc = state.lastLatencyClass || 'NORMAL';
     var sd = state.lastSegDur || 5;
     var isBalanced = liveCfg.profile === 'balanced';
-    var safeBh = isBalanced ? 4.2 : 2.8;
-    var entryBh = isBalanced ? 5.5 : 3.6;
-    var targetLl = isBalanced ? 6.0 : 4.2;
+    var safeBh = isBalanced ? 4.5 : 3.0;
+    var entryBh = isBalanced ? 6.0 : 4.2;
+    var targetLl = isBalanced ? 6.5 : 4.8;
     if (lc.indexOf('ULTRA') >= 0 || sd <= 1.5) {
       safeBh = isBalanced ? 1.4 : 0.9;
       entryBh = isBalanced ? 2.2 : 1.5;
@@ -1415,21 +1415,22 @@ var e,t,i="function"==typeof Symbol?Symbol:{},n=i.iterator||"@@iterator",a=i.toS
       return;
     }
 
-    var jumpCooldownOk = pendingResumeCatchup || (Date.now() - lastSeekJumpAt > 10000);
-    if (bh > safeBh + 2.2 && ll > targetLl + 2.2 && isHead && !manualDvrHold && jumpCooldownOk) {
-      var jumpSec = Math.min(bh - (safeBh + 0.6), ll - targetLl);
-      if (jumpSec > 1.5) {
+    var jumpThreshold = pendingResumeCatchup ? (safeBh + 2.5) : (safeBh + 6.5);
+    var jumpCooldownOk = pendingResumeCatchup || (Date.now() - lastSeekJumpAt > 18000);
+    if (bh > jumpThreshold && ll > targetLl + 4.5 && isHead && !manualDvrHold && jumpCooldownOk) {
+      var jumpSec = Math.min(bh - (safeBh + 1.0), ll - targetLl);
+      if (jumpSec > 2.5) {
         lastSeekJumpAt = Date.now();
         pendingResumeCatchup = false;
         restoreBaseRate(v, 'in-buffer-jump');
         try {
           var baseCt = v.currentTime || 0;
-          var landBh = safeBh + 0.7;
+          var landBh = safeBh + 1.0;
           var targetCt = baseCt + jumpSec;
           if (isFinite(bufEnd) && targetCt > bufEnd - landBh) {
             targetCt = Math.max(baseCt, bufEnd - landBh);
           }
-          if (targetCt > baseCt + 1.0) {
+          if (targetCt > baseCt + 1.5) {
             v.currentTime = targetCt;
             state.jumps = (state.jumps || 0) + 1;
           }
