@@ -75,10 +75,10 @@ quality_action_target = 'function ho(e,t){switch(e){'
 assert code.count(quality_action_target) == 1, "custom action dispatcher must match once"
 code = code.replace(quality_action_target, quality_action_target + 'case"TT_QUALITY_SELECT":if(window.__ttQualityController)window.__ttQualityController.select(t.videoId,t.id);break;', 1)
 
-code = code.replace('preferredVideoQuality:"auto"', 'preferredVideoQuality:"2160p",maxAv1BitrateMbps:"40",maxOtherBitrateMbps:"100"', 1)
+code = code.replace('preferredVideoQuality:"auto"', 'preferredVideoQuality:"2160p",maxAv1BitrateMbps:"40",maxOtherBitrateMbps:"100",liveLatencyProfile:"low",liveDropProtection:!0,liveAutoCatchupOnResume:!0', 1)
 
 codec_menu_target = 'options:["any","vp9","av01","avc1"].map(e=>({name:"any"===e?ga("settings.options.videoPlayer.options.codecAny"):e.toUpperCase(),key:"preferredVideoCodec",value:e}))}'
-codec_menu_replacement = codec_menu_target + ',{name:"Limite máximo de bitrate (AV1)",icon:"VIDEO_QUALITY",value:null,menuId:"tt-max-av1-bitrate",menuHeader:{title:"Limite máximo de bitrate (AV1)",subtitle:"Define o teto para AV1 (padrão: 40 Mbps)"},options:["20","30","40","60","100","unlimited"].map(e=>({name:"unlimited"===e?"Sem limite":`${e} Mbps`+("40"===e?" (Padrão)":""),key:"maxAv1BitrateMbps",value:e}))},{name:"Limite máximo de bitrate (VP9/AVC/HEVC)",icon:"VIDEO_QUALITY",value:null,menuId:"tt-max-other-bitrate",menuHeader:{title:"Limite máximo de bitrate (VP9/AVC/HEVC)",subtitle:"Define o teto para VP9, H.264/AVC, H.265/HEVC e outros (padrão: 100 Mbps)"},options:["45","60","80","100","120","150","unlimited"].map(e=>({name:"unlimited"===e?"Sem limite":`${e} Mbps`+("100"===e?" (Padrão)":""),key:"maxOtherBitrateMbps",value:e}))}'
+codec_menu_replacement = codec_menu_target + ',{name:"Limite máximo de bitrate (AV1)",icon:"VIDEO_QUALITY",value:null,menuId:"tt-max-av1-bitrate",menuHeader:{title:"Limite máximo de bitrate (AV1)",subtitle:"Define o teto para AV1 (padrão: 40 Mbps)"},options:["20","30","40","60","100","unlimited"].map(e=>({name:"unlimited"===e?"Sem limite":`${e} Mbps`+("40"===e?" (Padrão)":""),key:"maxAv1BitrateMbps",value:e}))},{name:"Limite máximo de bitrate (VP9/AVC/HEVC)",icon:"VIDEO_QUALITY",value:null,menuId:"tt-max-other-bitrate",menuHeader:{title:"Limite máximo de bitrate (VP9/AVC/HEVC)",subtitle:"Define o teto para VP9, H.264/AVC, H.265/HEVC e outros (padrão: 100 Mbps)"},options:["45","60","80","100","120","150","unlimited"].map(e=>({name:"unlimited"===e?"Sem limite":`${e} Mbps`+("100"===e?" (Padrão)":""),key:"maxOtherBitrateMbps",value:e}))},{name:"Modo Ao Vivo (Latência)",icon:"SPEED",value:null,menuId:"tt-live-latency-profile",menuHeader:{title:"Modo Ao Vivo (Latência)",subtitle:"Controla o atraso e o buffer em transmissões ao vivo"},options:[{id:"low",label:"Baixa Latência (Padrão)"},{id:"balanced",label:"Equilibrado (Mais estável)"},{id:"off",label:"Padrão do YouTube (Desligado)"}].map(o=>({name:o.label,key:"liveLatencyProfile",value:o.id}))},{name:"Proteção contra perda de quadros (Lives)",icon:"VIDEO_QUALITY",value:"liveDropProtection"},{name:"Retorno automático ao vivo (PiP/Pause)",icon:"SPEED",value:"liveAutoCatchupOnResume"}'
 assert codec_menu_target in code, "codec_menu_target not found in userScript.js"
 code = code.replace(codec_menu_target, codec_menu_replacement, 1)
 
@@ -189,6 +189,24 @@ exp_stage1 = r"""
       }
     } catch (_) {}
     return 1;
+  }
+
+  function getLiveConfig() {
+    var res = { profile: 'low', dropProtection: true, autoCatchupOnResume: true };
+    try {
+      var raw = localStorage.getItem('ytaf-configuration');
+      if (raw) {
+        var cfg = JSON.parse(raw);
+        if (cfg) {
+          if (cfg.liveLatencyProfile === 'low' || cfg.liveLatencyProfile === 'balanced' || cfg.liveLatencyProfile === 'off') {
+            res.profile = cfg.liveLatencyProfile;
+          }
+          if (typeof cfg.liveDropProtection === 'boolean') res.dropProtection = cfg.liveDropProtection;
+          if (typeof cfg.liveAutoCatchupOnResume === 'boolean') res.autoCatchupOnResume = cfg.liveAutoCatchupOnResume;
+        }
+      }
+    } catch (_) {}
+    return res;
   }
 
   function isDefaultSpeed(spd) {
@@ -396,6 +414,21 @@ exp_stage1 = r"""
   var weChangedRate = false;
   var lastTimeUpdateTime = 0;
   var manualDvrHold = false;
+  var pausedAt = 0;
+  var pendingResumeCatchup = false;
+  var dropCheckAt = 0;
+  var dropBaseDropped = 0;
+  var dropBaseTotal = 0;
+  var dropHighStreak = 0;
+  var dropAdjustedVid = null;
+
+  try {
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible' && !manualDvrHold && getLiveConfig().autoCatchupOnResume) {
+        pendingResumeCatchup = true;
+      }
+    }, true);
+  } catch (_) {}
 
   function getPlayer() {
     if (cachedPlayer && cachedPlayer.isConnected) return cachedPlayer;
@@ -411,13 +444,35 @@ exp_stage1 = r"""
       try {
         hookedVideo.addEventListener('emptied', function () {
           manualDvrHold = false;
+          pausedAt = 0;
+          pendingResumeCatchup = false;
+          dropCheckAt = 0;
+          dropHighStreak = 0;
           lastTimeUpdateTime = 0;
           lastVideoSwitchAt = Date.now();
         }, true);
         hookedVideo.addEventListener('loadstart', function () {
           manualDvrHold = false;
+          pausedAt = 0;
+          pendingResumeCatchup = false;
+          dropCheckAt = 0;
+          dropHighStreak = 0;
           lastTimeUpdateTime = 0;
           lastVideoSwitchAt = Date.now();
+        }, true);
+        hookedVideo.addEventListener('pause', function () {
+          pausedAt = Date.now();
+        }, true);
+        hookedVideo.addEventListener('play', function () {
+          if (pausedAt > 0 && Date.now() - pausedAt >= 8000 && !manualDvrHold && getLiveConfig().autoCatchupOnResume) {
+            pendingResumeCatchup = true;
+          }
+          pausedAt = 0;
+        }, true);
+        hookedVideo.addEventListener('leavepictureinpicture', function () {
+          if (!manualDvrHold && getLiveConfig().autoCatchupOnResume) {
+            pendingResumeCatchup = true;
+          }
         }, true);
         hookedVideo.addEventListener('waiting', function () {
           lastRebufferAt = Date.now();
@@ -541,6 +596,14 @@ exp_stage1 = r"""
       return;
     }
 
+    var liveCfg = getLiveConfig();
+    if (liveCfg.profile === 'off') {
+      pendingResumeCatchup = false;
+      restoreBaseRate(v, 'disabled-by-user');
+      return;
+    }
+
+    var bufEnd = NaN;
     var ll = st ? parseNumeric(st.live_latency_secs || st.live_latency_seconds || st.live_latency || st.liveLatency, st.live_latency_samples) : NaN;
     var bh = st ? parseNumeric(st.buffer_health_seconds || st.buffer_health_secs || st.buffer_health || st.bufferHealth, st.buffer_health_samples) : NaN;
     if (!isFinite(ll) || !isFinite(bh)) {
@@ -554,16 +617,29 @@ exp_stage1 = r"""
         }
       } catch (_) {}
     }
-    if (!isFinite(bh) && v.buffered && v.buffered.length) {
+    if (v.buffered && v.buffered.length) {
       try {
         var ct = v.currentTime || 0;
         for (var bi = 0; bi < v.buffered.length; bi++) {
           if (ct >= v.buffered.start(bi) - 0.5 && ct <= v.buffered.end(bi) + 0.5) {
-            bh = Math.max(0, v.buffered.end(bi) - ct);
+            bufEnd = v.buffered.end(bi);
+            if (!isFinite(bh)) bh = Math.max(0, bufEnd - ct);
             break;
           }
         }
       } catch (_) {}
+    }
+    if (!isFinite(ll) && v.seekable && v.seekable.length) {
+      try {
+        var se = v.seekable.end(v.seekable.length - 1);
+        var ctSeek = v.currentTime || 0;
+        if (isFinite(se) && se > ctSeek && se - ctSeek < 86400) {
+          ll = se - ctSeek;
+        }
+      } catch (_) {}
+    }
+    if (!isFinite(ll) && isFinite(bh)) {
+      ll = bh + Math.min(state.lastSegDur || 5, 2.5);
     }
     state.lastLl = isFinite(ll) ? Math.round(ll * 100) / 100 : null;
     state.lastBh = isFinite(bh) ? Math.round(bh * 100) / 100 : null;
@@ -573,6 +649,43 @@ exp_stage1 = r"""
       try { console.warn('[TTLive]', vid, 'lc=' + state.lastLatencyClass, 'll=' + state.lastLl, 'bh=' + state.lastBh, 'rate=' + (v.playbackRate || 1), 'reason=' + state.lastReason, 'stKeys=' + (st ? Object.keys(st).join(',') : 'none')); } catch (_) {}
     }
 
+    if (liveCfg.dropProtection && vid && dropAdjustedVid !== vid && Date.now() - lastVideoSwitchAt > 6000 && typeof v.getVideoPlaybackQuality === 'function') {
+      try {
+        var qMetrics = v.getVideoPlaybackQuality();
+        var curDrop = qMetrics && qMetrics.droppedVideoFrames || 0;
+        var curTot = qMetrics && qMetrics.totalVideoFrames || 0;
+        var nowMs = Date.now();
+        if (!dropCheckAt) {
+          dropCheckAt = nowMs;
+          dropBaseDropped = curDrop;
+          dropBaseTotal = curTot;
+        } else if (nowMs - dropCheckAt >= 6000) {
+          var dTot = curTot - dropBaseTotal;
+          var dDrop = curDrop - dropBaseDropped;
+          dropCheckAt = nowMs;
+          dropBaseDropped = curDrop;
+          dropBaseTotal = curTot;
+          if (dTot >= 120 && dDrop / dTot >= 0.15) {
+            dropHighStreak++;
+            if (dropHighStreak >= 2 && window.__ttQualityController && window.__ttQualityController.getRows && window.__ttQualityController.select) {
+              var qRows = window.__ttQualityController.getRows(vid) || [];
+              var allowedRows = qRows.filter(function (r) { return r && r.allowed && !r.isAuto; });
+              var curRowIdx = allowedRows.findIndex(function (r) { return r.selected; });
+              if (curRowIdx >= 0 && curRowIdx + 1 < allowedRows.length) {
+                dropAdjustedVid = vid;
+                state.dropAdjustments = (state.dropAdjustments || 0) + 1;
+                window.__ttQualityController.select(vid, allowedRows[curRowIdx + 1].id);
+              } else {
+                dropAdjustedVid = vid;
+              }
+            }
+          } else {
+            dropHighStreak = 0;
+          }
+        }
+      } catch (_) {}
+    }
+
     if (!isFinite(ll) || !isFinite(bh)) return;
 
     var isHead = typeof p.isAtLiveHead === 'function' ? !!p.isAtLiveHead() : true;
@@ -580,6 +693,7 @@ exp_stage1 = r"""
       if (ll <= 6.5) {
         manualDvrHold = false;
       } else {
+        pendingResumeCatchup = false;
         restoreBaseRate(v, 'manual-dvr');
         return;
       }
@@ -587,44 +701,54 @@ exp_stage1 = r"""
 
     var lc = state.lastLatencyClass || 'NORMAL';
     var sd = state.lastSegDur || 5;
-    var safeBh = Math.max(2.5, sd * 0.55);
-    var entryBh = Math.max(3.8, sd * 0.8);
-    var targetLl = Math.max(4.0, sd * 0.9);
+    var isBalanced = liveCfg.profile === 'balanced';
+    var safeBh = isBalanced ? 3.5 : 1.8;
+    var entryBh = isBalanced ? 5.0 : 2.6;
+    var targetLl = isBalanced ? 5.5 : 3.0;
     if (lc.indexOf('ULTRA') >= 0 || sd <= 1.5) {
-      safeBh = 1.0;
-      entryBh = 1.8;
-      targetLl = 1.6;
+      safeBh = isBalanced ? 1.4 : 0.9;
+      entryBh = isBalanced ? 2.2 : 1.5;
+      targetLl = isBalanced ? 2.2 : 1.4;
     } else if (lc.indexOf('LOW') >= 0 || sd <= 2.5) {
-      safeBh = 1.5;
-      entryBh = 2.4;
-      targetLl = 2.5;
+      safeBh = isBalanced ? 2.2 : 1.4;
+      entryBh = isBalanced ? 3.2 : 2.1;
+      targetLl = isBalanced ? 3.5 : 2.2;
     }
 
     var headroom = bh - safeBh;
     var excess = ll - targetLl;
 
     if (headroom <= 0.05) {
+      pendingResumeCatchup = false;
       restoreBaseRate(v, 'low-buffer-guard');
       return;
     }
 
-    if (bh > safeBh + 5.0 && ll > targetLl + 5.0 && isHead && !manualDvrHold && Date.now() - lastSeekJumpAt > 20000) {
-      var jumpSec = Math.min(bh - (safeBh + 1.5), ll - targetLl);
-      if (jumpSec > 2.5) {
+    var jumpCooldownOk = pendingResumeCatchup || (Date.now() - lastSeekJumpAt > 10000);
+    if (bh > safeBh + 2.2 && ll > targetLl + 2.2 && isHead && !manualDvrHold && jumpCooldownOk) {
+      var jumpSec = Math.min(bh - (safeBh + 0.6), ll - targetLl);
+      if (jumpSec > 1.5) {
         lastSeekJumpAt = Date.now();
+        pendingResumeCatchup = false;
         restoreBaseRate(v, 'in-buffer-jump');
         try {
-          if (typeof p.seekTo === 'function' && typeof p.getCurrentTime === 'function') {
-            p.seekTo(p.getCurrentTime() + jumpSec, true);
+          var baseCt = (typeof p.getCurrentTime === 'function' ? p.getCurrentTime() : (v.currentTime || 0));
+          var targetCt = baseCt + jumpSec;
+          if (isFinite(bufEnd) && targetCt > bufEnd - safeBh) {
+            targetCt = Math.max(baseCt, bufEnd - safeBh);
+          }
+          if (typeof p.seekTo === 'function') {
+            p.seekTo(targetCt, true);
           } else {
-            v.currentTime = (v.currentTime || 0) + jumpSec;
+            v.currentTime = targetCt;
           }
         } catch (_) {}
         return;
       }
     }
+    pendingResumeCatchup = false;
 
-    if (ll > 12 && isHead && !manualDvrHold && bh >= entryBh && Date.now() - lastSeekJumpAt > 30000 && typeof p.seekTo === 'function') {
+    if (ll > 12 && isHead && !manualDvrHold && bh >= entryBh && Date.now() - lastSeekJumpAt > 25000 && typeof p.seekTo === 'function') {
       lastSeekJumpAt = Date.now();
       restoreBaseRate(v, 'seek-live-head');
       try { p.seekTo(Infinity, true); } catch (_) {}

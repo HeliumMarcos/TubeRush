@@ -1,0 +1,37 @@
+name: TubeRush CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  verify-and-purge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Verify u.js syntax
+        run: node --check u.js
+
+      - name: Run TubeRush unit tests
+        run: |
+          node --test \
+            scripts/l1/tests/bitrate-policy.test.cjs \
+            scripts/tests/quality_formats.test.cjs \
+            scripts/tests/vp9_fallback.test.cjs
+
+      - name: Purge jsDelivr cache for @main/u.js
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          curl -fsS "https://purge.jsdelivr.net/gh/HeliumMarcos/TubeRush@main/u.js" || true
