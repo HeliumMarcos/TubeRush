@@ -13,7 +13,7 @@ parser.add_argument("--variant", choices=("main", "experimental"), required=True
                     help="Explicitly select the variant to keep experimental live code out of main")
 args = parser.parse_args()
 
-header = """// TizenTube Cobalt L1 - honest per-format capability and bitrate policy
+header = """// TubeRush L1 - honest per-format capability and bitrate policy
 (function() {
     if (window.__ttL1Patched) return;
     window.__ttL1Patched = true;
@@ -84,7 +84,7 @@ with open(user_script_path, "r", encoding="utf-8") as f:
 
 target_str = 'null!=e&&null!==(i=e.streamingData)&&void 0!==i&&i.adaptiveFormats&&"any"!==Ma("preferredVideoCodec")){var S=Ma("preferredVideoCodec");e.streamingData.adaptiveFormats.find(e=>e.mimeType.includes(S))&&(e.streamingData.adaptiveFormats=e.streamingData.adaptiveFormats.filter(e=>!!e.mimeType.startsWith("audio/")||e.mimeType.includes(S)))}'
 
-replacement_str = 'null!=e&&e.streamingData&&Array.isArray(e.streamingData.adaptiveFormats)){try{if(window.__ttVp9Fallback)window.__ttVp9Fallback.apply(e);if(window.__ttQualityController)window.__ttQualityController.apply(e)}catch(err){console.warn("[TizenTube Quality] Format filtering failed")}}'
+replacement_str = 'null!=e&&e.streamingData&&Array.isArray(e.streamingData.adaptiveFormats)){try{if(window.__ttVp9Fallback)window.__ttVp9Fallback.apply(e);if(window.__ttQualityController)window.__ttQualityController.apply(e)}catch(err){console.warn("[TubeRush Quality] Format filtering failed")}}'
 assert code.count(target_str) == 1, "codec hook must match exactly once"
 code = code.replace(target_str, replacement_str, 1)
 quality_action_target = 'function ho(e,t){switch(e){'
@@ -117,6 +117,11 @@ updater_target = 'https://api.github.com/repos/reisxd/TizenTubeCobalt/releases/l
 updater_replacement = 'https://api.github.com/repos/HeliumMarcos/TubeRush/releases/latest'
 assert code.count(updater_target) == 1, "updater_target must match once"
 code = code.replace(updater_target, updater_replacement, 1)
+
+updater_asset_target = 'o=a?"arm64-v8a"===a?n.assets.find(e=>e.name.includes("arm64.apk")).browser_download_url:n.assets.find(e=>e.name.includes("arm.apk")).browser_download_url:n.assets[0].browser_download_url'
+updater_asset_replacement = 'o=(a?"arm64-v8a"===a?n.assets.find(e=>e.name.includes("arm64.apk"))||n.assets[0]:n.assets.find(e=>e.name.includes("armv7.apk")||e.name.includes("arm.apk"))||n.assets[0]:n.assets[0]).browser_download_url'
+assert code.count(updater_asset_target) == 1, "updater_asset_target must match once"
+code = code.replace(updater_asset_target, updater_asset_replacement, 1)
 
 tag_target = 'r=n.tag_name.replace("v","")'
 tag_replacement = 'r=n.tag_name.replace(/^v/,"").split("-")[0]'
@@ -167,7 +172,7 @@ ptbr_full = (
 code = code[:ptbr_start] + ptbr_full + code[ptbr_end:]
 
 exp_stage1 = r"""
-/* === TizenTube E1 (exp/low-latency) Stage 1: Proxima/ULL + Preconnect + Live Auto-Catch-Up === */
+/* === TubeRush Live Low-Latency: Proxima/ULL + Preconnect + Adaptive Live Catch-Up === */
 (function () {
   'use strict';
   if (window.__ttExpStage1Loaded) return;

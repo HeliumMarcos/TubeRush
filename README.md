@@ -40,22 +40,22 @@ O TubeRush busca oferecer controle sobre as faixas disponíveis, incluindo **DD+
 
 ### 🔴 Transmissões ao vivo
 
-O perfil **Equilibrado (Mais estável)** é a preferência padrão documentada na versão v2.1.4. Há também opções de menor latência e de comportamento padrão do YouTube. O controlador procura reduzir atrasos sem comprometer a fluidez, mas a latência real depende da transmissão e da rede.
+O perfil **Equilibrado (Mais estável)** é a preferência padrão a partir da versão `v2.1.4` (mantido na `v2.1.5`). Há também opções de menor latência e de comportamento padrão do YouTube. O controlador procura reduzir atrasos sem comprometer a fluidez, mas a latência real depende da transmissão e da rede.
 
 ## ⬇️ Instalação
 
-1. Acesse **[Releases — versão mais recente](https://github.com/HeliumMarcos/TubeRush/releases/latest)**.
-2. Baixe o APK compatível com a arquitetura do seu dispositivo. **Nas próximas releases, o APK ARMv7 será publicado como `TubeRush-armv7.apk`**. A release v2.1.4-c7k-l1 mantém o nome legado `TizenTube-L1-arm.apk`.
+1. Acesse **[Releases — versão mais recente (`v2.1.5-c7k-l1`)](https://github.com/HeliumMarcos/TubeRush/releases/latest)**.
+2. Baixe o APK `TubeRush-armv7.apk` (arquitetura ARMv7 / `armeabi-v7a`).
 3. Instale o APK pelo gerenciador de arquivos da TV ou via ADB, autorizando a instalação quando necessário.
-4. Abra o TubeRush e configure suas preferências.
+4. Abra o **TubeRush** e configure suas preferências.
 
-Exemplo de instalação via ADB para as próximas releases:
+Exemplo de instalação via ADB:
 
 ```bash
 adb install -r TubeRush-armv7.apk
 ```
 
-> Para a versão v2.1.4, substitua o nome do arquivo no comando por `TizenTube-L1-arm.apk`. Confira sempre os **Assets** da versão escolhida. A instalação com `-r` depende da compatibilidade da assinatura e do identificador do pacote já instalado.
+> Confira sempre os **Assets** da versão escolhida. A instalação com `-r` depende da compatibilidade da assinatura e do identificador do pacote já instalado.
 
 ## 🧩 Compatibilidade e validação
 
