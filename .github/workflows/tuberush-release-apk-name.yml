@@ -1,0 +1,44 @@
+name: TubeRush — padronizar nome do APK
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag de uma release existente para padronizar'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  rename-armv7-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Padronizar nome do APK ARMv7
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="TubeRush-armv7.apk"
+          release_json="$(gh api "repos/$REPO/releases/tags/$RELEASE_TAG")"
+          assets="$(jq -r '.assets[].name' <<< "$release_json")"
+          if grep -Fxq "$target" <<< "$assets"; then
+            echo "O asset $target já existe; nenhuma alteração necessária."
+            exit 0
+          fi
+          # Somente o nome legado conhecido: não renomear APKs de outras arquiteturas.
+          legacy="TizenTube-L1-arm.apk"
+          if ! grep -Fxq "$legacy" <<< "$assets"; then
+            echo "Nenhum APK ARMv7 legado encontrado nesta release."
+            exit 0
+          fi
+          asset_id="$(jq -r --arg name "$legacy" '.assets[] | select(.name == $name) | .id' <<< "$release_json")"
+          # Renomeia o asset existente via API, sem alterar bytes ou assinatura.
+          gh api --method PATCH "repos/$REPO/releases/assets/$asset_id" -f name="$target" >/dev/null
+          echo "Asset renomeado para $target na release $RELEASE_TAG."
