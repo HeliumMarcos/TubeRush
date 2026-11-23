@@ -41,17 +41,17 @@ O perfil **Equilibrado (Mais estável)** é a preferência padrão documentada n
 ## ⬇️ Instalação
 
 1. Acesse **[Releases — versão mais recente](https://github.com/HeliumMarcos/TubeRush/releases/latest)**.
-2. Baixe o APK compatível com a arquitetura do seu dispositivo. **Na release v2.1.4-c7k-l1, o arquivo publicado se chama `TizenTube-L1-arm.apk`** (nome legado do artefato; o projeto é TubeRush).
+2. Baixe o APK compatível com a arquitetura do seu dispositivo. **Nas próximas releases, o APK ARMv7 será publicado como `TubeRush-armv7.apk`**. A release v2.1.4-c7k-l1 mantém o nome legado `TizenTube-L1-arm.apk`.
 3. Instale o APK pelo gerenciador de arquivos da TV ou via ADB, autorizando a instalação quando necessário.
 4. Abra o TubeRush e configure suas preferências.
 
-Exemplo de instalação via ADB, usando o nome do APK publicado na v2.1.4:
+Exemplo de instalação via ADB para as próximas releases:
 
 ```bash
-adb install -r TizenTube-L1-arm.apk
+adb install -r TubeRush-armv7.apk
 ```
 
-> O nome do arquivo pode mudar em releases futuras. Confira sempre os **Assets** da versão escolhida. A instalação com `-r` depende da compatibilidade da assinatura e do identificador do pacote já instalado.
+> Para a versão v2.1.4, substitua o nome do arquivo no comando por `TizenTube-L1-arm.apk`. Confira sempre os **Assets** da versão escolhida. A instalação com `-r` depende da compatibilidade da assinatura e do identificador do pacote já instalado.
 
 ## 🧩 Compatibilidade e validação
 
