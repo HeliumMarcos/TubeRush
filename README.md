@@ -1,5 +1,9 @@
 # 🚀 TubeRush
 
+<p align="center">
+  <img src=".github/assets/TubeRush%20Banner.png" alt="TubeRush — banner oficial do projeto" width="860">
+</p>
+
 **YouTube na TV, do seu jeito.**
 
 Cliente alternativo do YouTube TV para **Android TV / Google TV**, baseado no **Google Cobalt** e no projeto [TizenTubeCobalt](https://github.com/reisxd/TizenTubeCobalt), com foco em **4K60, HDR, seleção de codecs, áudio multicanal e baixa latência em transmissões ao vivo**.
