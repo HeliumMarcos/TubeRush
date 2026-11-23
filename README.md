@@ -1,77 +1,86 @@
-# 🚀 TubeRush — TCL C7K 4K60 HDR & Low-Latency Edition
+# 🚀 TubeRush
 
-<p align="center">
-    <img width="860px" src=".github/assets/TubeRush%20Banner.png">
-    <br>
-</p>
+**YouTube na TV, do seu jeito.**
 
-Cliente YouTube TV sobre **Google Cobalt `27.lts.10` `qa`** (Starboard 18), otimizado para TVs Android/Google TV com SoC **MediaTek MT5896 / Pentonic 700** (como a **TCL C7K**) entregarem **4K (`2160p60 HDR10`)**, seleção multi-codec com marcação em tempo real e **baixa latência estável em lives** — com interface 100% em Português Brasileiro.
+Cliente alternativo do YouTube TV para **Android TV / Google TV**, baseado no **Google Cobalt** e no projeto [TizenTubeCobalt](https://github.com/reisxd/TizenTubeCobalt), com foco em **4K60, HDR, seleção de codecs, áudio multicanal e baixa latência em transmissões ao vivo**.
 
----
+[![Última versão](https://img.shields.io/github/v/release/HeliumMarcos/TubeRush?label=Vers%C3%A3o)](https://github.com/HeliumMarcos/TubeRush/releases/latest) [![Downloads](https://img.shields.io/github/downloads/HeliumMarcos/TubeRush/total?label=Downloads)](https://github.com/HeliumMarcos/TubeRush/releases) [![Issues](https://img.shields.io/github/issues/HeliumMarcos/TubeRush)](https://github.com/HeliumMarcos/TubeRush/issues)
 
-## ✨ Melhorias implementadas no TubeRush (`v2.1.4`)
+**[⬇️ Baixar APK](https://github.com/HeliumMarcos/TubeRush/releases/latest)** · **[📋 Versões](https://github.com/HeliumMarcos/TubeRush/releases)** · **[🛠️ Código-fonte](https://github.com/HeliumMarcos/TubeRush)** · **[🐛 Reportar problema](https://github.com/HeliumMarcos/TubeRush/issues)**
 
-### 1. 📦 Identidade própria, Tradução PT-BR Completa e Updater Integrado
-- **App unificado:** **TubeRush** (`io.gh.heliummarcos.tizentube.cobalt`) com ícone, banner e splash oficiais do YouTube TV.
-- **100% em Português Brasileiro:** todos os menus do TubeRush, configurações do reprodutor, interface e gerenciador de atualizações traduzidos quando a TV/app está em `pt-BR`.
-- **TubeRush Updater:** busca e instala atualizações diretamente de `HeliumMarcos/TubeRush` (`releases/latest`), com `versionName` e `versionCode` sincronizados.
+> **Ambiente principal de desenvolvimento e testes:** TCL C7K (Android 14 / MediaTek MT5896). A disponibilidade de formatos e a estabilidade variam conforme o dispositivo, o vídeo, o decodificador e a versão do YouTube TV.
 
-### 2. 🎛️ Menu de Qualidade Multi-Codec & Seleção Visual Inteligente (`effectiveBitrate`)
-- **Codecs simultâneos:** exibe na mesma lista faixas reais descobertas de **AV1**, **VP9** e **AVC/H.264** para cada resolução (`2160p`, `1440p`, `1080p`, etc.) em layout limpo de duas linhas (resolução/HDR/FPS + codec/Mbps/status).
-- **Marcação imediata (`✓`):** acompanha e atualiza instantaneamente a faixa/codec em reprodução ao alternar qualidade durante o vídeo ou live.
-- **Hierarquia automática por qualidade visual real:**
-  1. Maior resolução (`height`)
-  2. Maior taxa de quadros (`fps`)
-  3. Faixa dinâmica (`HDR` quando suportado e preferido vs `SDR`, sem misturar HDR e SDR na comparação de bitrate)
-  4. Desempate final por **`effectiveBitrate = bps × multiplicador`** (usando `averageBitrate` com fallback para `bitrate` em lives):
-     - **VOD:** `AV1 × 1.70`, `VP9/HEVC × 1.35`, `AVC × 1.00`
-     - **Live:** `AV1 × 1.50`, `VP9/HEVC × 1.25`, `AVC × 1.00`
+## ✨ Principais recursos
 
-### 3. 🔴 Controle Inteligente de Latência ao Vivo & Estabilidade
-- **Modo Ao Vivo (Latência) no menu do Reprodutor:**
-  - **Equilibrado (Mais estável) — *Pré-selecionado por padrão*:** mantém o buffer enxuto (~3,8–5,0 s em `Normal Latency` e ~2,2 s em `Low Latency`) com aceleração adaptativa suave (`1.06x–1.15x` com preservação de tom) e salto em RAM apenas em atrasos grandes, garantindo baixa latência sem micro-travamentos.
-  - **Baixa Latência:** perfil mais agressivo para menor atraso possível com a borda ao vivo.
-  - **Padrão do YouTube (Desligado):** desativa o controlador e mantém o buffer nativo do YouTube.
-- **Proteção contra perda de quadros (Lives):** monitora `droppedVideoFrames` após a estabilização inicial e desce automaticamente 1 nível de qualidade se detectar sobrecarga sustentada de decodificação (`>= 15%`).
-- **Retorno automático ao vivo (PiP/Pause):** reposiciona a transmissão próximo ao ponto ao vivo ao despausar (após `>= 8 s`) ou sair do Mini Player / PiP.
-- **Flags Proxima/SABR:** ativa `html5_enable_proxima`, `html5_sabr_force_proxima`, `yt-player-proxima-pref`, pré-aquecimento de `yt-player-bandwidth` e `<link rel="preconnect">`.
+| Área | Recursos |
+| --- | --- |
+| **Vídeo** | Seleção de representações 2160p, 1440p, 1080p e inferiores, conforme disponibilidade; codecs AV1, VP9 e AVC/H.264; identificação de FPS, HDR e bitrate |
+| **Qualidade** | Menu multi-codec e indicação da representação em reprodução; classificação por qualidade e bitrate efetivo |
+| **Limites de bitrate** | Valores padrão configurados de **40 Mbps para AV1** e **100 Mbps para VP9/AVC/HEVC**, sujeitos à compatibilidade do hardware |
+| **Fallback** | Estratégias de busca e seleção de representações alternativas quando a qualidade preferida não está disponível |
+| **Áudio** | Seleção de faixas e suporte a Dolby Digital Plus (E-AC-3) e Dolby Digital (AC-3), quando oferecidos pelo conteúdo e suportados pela saída de áudio |
+| **Lives** | Perfis de latência **Equilibrado**, **Baixa Latência** e **Padrão do YouTube**; ajustes adaptativos de buffer e proteção contra perda sustentada de quadros |
+| **Interface** | Menus e configurações do TubeRush em português brasileiro |
+| **Extras** | Recursos derivados do projeto original, como bloqueio de anúncios, SponsorBlock, DeArrow e controle de velocidade, sujeitos à compatibilidade |
+| **Atualizações** | Integração com os Releases do TubeRush para consultar novas versões |
 
-### 4. 🔓 Desbloqueio 4K60 HDR, SABR e Otimizações Nativas do Cobalt
-- **Limites reais de hardware configuráveis no menu:** teto ajustável para **AV1** (padrão: `40 Mbps`) e **VP9/AVC/HEVC** (padrão: `100 Mbps`) + clamp seguro em probes sintéticos de `isTypeSupported` / `decodingInfo` (`35M–250M → 35M`).
-- **Fallback VP9 autenticado (`WEB` / `TVHTML5_SIMPLY`):** busca metadados suplementares autenticados com PO token sem interromper a reprodução quando a sessão TV omite faixas VP9 em `2160p`/`1440p`/`1080p`.
-- **Otimizações nativas (`JavaSwitches` & `MediaCodecBridge`):**
-  - `EnableQUIC` e `DisableLowEndDeviceMode` ativos
-  - `ForceGpuMemAvailableMb = 256` MB e `V8MaxOldSpaceSize = 768` MB
-  - `CobaltDynamicMojoPipeSizing` ampliado (`media_size = 2 MB`, `subresource_size = 512 KB`) + `CobaltBypassResourceLoadScheduler`
-  - `MediaFormat.KEY_LOW_LATENCY = 1` em `MediaCodecBridge.configureVideo` quando suportado pelos decoders MediaTek (`c2.mtk.av1.decoder`, `c2.mtk.vp9.decoder`, `c2.mtk.avc.decoder`)
+### 🎬 Vídeo e qualidade
 
----
+A seleção multi-codec procura apresentar as representações efetivamente descobertas para cada vídeo, com resolução, FPS, HDR, codec e bitrate. O algoritmo de qualidade utiliza **effectiveBitrate** para comparar alternativas e considera características do formato e do conteúdo.
 
-## 🛠️ Recursos Adicionais Integrados
+Os limites configurados representam critérios de seleção e **não garantem** que todo fluxo dentro do limite será decodificado. Alguns formatos dependem de manifestos, sessão, autenticação e suporte do player. A descoberta de faixas adicionais por **SABR / Proxima** e mecanismos de fallback continua sujeita a testes práticos.
 
-- 🛑 **Ad Blocker**
-- ❗ **SponsorBlock**
-- ⏭️ **Controle de velocidade**
-- 🔺 **[DeArrow](https://dearrow.ajay.app/)**
+### 🔊 Áudio
 
----
+O TubeRush busca oferecer controle sobre as faixas disponíveis, incluindo **DD+ (E-AC-3)** e **DD (AC-3)**. A reprodução multicanal depende da faixa disponibilizada pelo YouTube, do dispositivo e da configuração de passthrough/saída de áudio. A troca entre codecs e idiomas deve ser validada em cada ambiente.
 
-## ⬇️ Download (Releases Oficiais)
+### 🔴 Transmissões ao vivo
 
-- 👉 **[TubeRush `v2.1.4-c7k-l1` — Releases](https://github.com/HeliumMarcos/TubeRush/releases/latest)**
+O perfil **Equilibrado (Mais estável)** é a preferência padrão documentada na versão v2.1.4. Há também opções de menor latência e de comportamento padrão do YouTube. O controlador procura reduzir atrasos sem comprometer a fluidez, mas a latência real depende da transmissão e da rede.
 
-> 💡 **Arquitetura:** `armeabi-v7a` (`qa`), validado na **TCL C7K (Android 14 / MT5896)** em `2160p60 HDR10` e transmissões ao vivo com baixa latência e estabilidade.
+## ⬇️ Instalação
 
-## ❓ Como instalar
+1. Acesse **[Releases — versão mais recente](https://github.com/HeliumMarcos/TubeRush/releases/latest)**.
+2. Baixe o APK compatível com a arquitetura do seu dispositivo. **Na release v2.1.4-c7k-l1, o arquivo publicado se chama `TizenTube-L1-arm.apk`** (nome legado do artefato; o projeto é TubeRush).
+3. Instale o APK pelo gerenciador de arquivos da TV ou via ADB, autorizando a instalação quando necessário.
+4. Abra o TubeRush e configure suas preferências.
 
-1. Baixe `TizenTube-L1-arm.apk` na página de [Releases](https://github.com/HeliumMarcos/TubeRush/releases).
-2. Instale na TV via gerenciador de arquivos ou ADB (`adb install -r TizenTube-L1-arm.apk`).
-3. Abra o app **TubeRush**.
+Exemplo de instalação via ADB, usando o nome do APK publicado na v2.1.4:
 
----
+```bash
+adb install -r TizenTube-L1-arm.apk
+```
 
-## 🙏 Créditos e Estrutura do Repositório
+> O nome do arquivo pode mudar em releases futuras. Confira sempre os **Assets** da versão escolhida. A instalação com `-r` depende da compatibilidade da assinatura e do identificador do pacote já instalado.
 
-- **Branch `main`:** código principal unificado do **TubeRush** (`u.js`, `cobalt/`, `starboard/`, `scripts/`, `docs/`, `.github/` e `README.md`), com CI automatizado (`52/52` testes unitários + purge jsDelivr).
-- **Branch `cobalt-full`:** árvore original completa do monorepo Chromium/Cobalt para compilações C++ nativas.
-- Desenvolvido e mantido por **Helium Marcos (L1)** — baseado no motor [Google Cobalt (`27.lts.10`)](https://cobalt.dev).
+## 🧩 Compatibilidade e validação
+
+**Dispositivo de referência:** TCL C7K com Android 14 e chipset MediaTek MT5896; testes de áudio com soundbar LG S95TR.
+
+A presença de **4K60, HDR, AV1, VP9 ou DD+** no menu não constitui garantia de reprodução em qualquer aparelho. Os resultados dependem do vídeo, da sessão do YouTube, do codec, do perfil de mídia, do decoder e da conexão. Funcionalidades como fallback de formatos, alternância de áudio e estabilidade de lives devem continuar sendo verificadas em testes reais.
+
+## 🗂️ Estrutura do repositório
+
+A branch `main` contém as seguintes entradas principais:
+
+```text
+.github/     Automação e workflows
+cobalt/      Motor Cobalt e integração de reprodução
+docs/        Documentação técnica
+scripts/     Scripts e ferramentas auxiliares
+starboard/   Integração com a plataforma
+u.js         Personalizações do cliente
+README.md    Apresentação do projeto
+```
+
+A documentação técnica herdada do Cobalt está em [`docs/`](docs/). Consulte [GitHub Actions](https://github.com/HeliumMarcos/TubeRush/actions) para o estado das compilações e dos testes; não presuma que um build foi aprovado sem verificar a execução correspondente.
+
+## 🛠️ Desenvolvimento e contribuições
+
+O código-fonte está disponível na branch [`main`](https://github.com/HeliumMarcos/TubeRush/tree/main). Para relatar falhas, inclua versão do APK, modelo da TV, versão do Android, vídeo de referência, codec e passos para reproduzir o problema em [Issues](https://github.com/HeliumMarcos/TubeRush/issues).
+
+## 🙏 Créditos e licenças
+
+**TubeRush** é uma personalização independente mantida por **HeliumMarcos (L1)**, baseada em [TizenTubeCobalt](https://github.com/reisxd/TizenTubeCobalt), [TizenTube](https://github.com/reisxd/TizenTube) e [Google Cobalt](https://cobalt.dev), além de componentes Chromium e outras dependências de código aberto. As licenças e os direitos dos componentes originais permanecem com seus respectivos autores.
+
+**TubeRush não é um aplicativo oficial do YouTube nem do Google.**
