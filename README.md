@@ -9,7 +9,7 @@ Cliente YouTube TV sobre **Google Cobalt `27.lts.10` `qa`** (Starboard 18), otim
 
 ---
 
-## ✨ Melhorias implementadas no TubeRush (`v2.1.4`)
+## ✨ Melhorias implementadas no TubeRush (`v2.1.5`)
 
 ### 1. 📦 Identidade própria, Tradução PT-BR Completa e Updater Integrado
 - **App unificado:** **TubeRush** (`io.gh.heliummarcos.tizentube.cobalt`) com ícone, banner e splash oficiais do YouTube TV.
@@ -58,14 +58,14 @@ Cliente YouTube TV sobre **Google Cobalt `27.lts.10` `qa`** (Starboard 18), otim
 
 ## ⬇️ Download (Releases Oficiais)
 
-- 👉 **[TubeRush `v2.1.4-c7k-l1` — Releases](https://github.com/HeliumMarcos/TubeRush/releases/latest)**
+- 👉 **[TubeRush `v2.1.5-c7k-l1` — Releases](https://github.com/HeliumMarcos/TubeRush/releases/latest)**
 
 > 💡 **Arquitetura:** `armeabi-v7a` (`qa`), validado na **TCL C7K (Android 14 / MT5896)** em `2160p60 HDR10` e transmissões ao vivo com baixa latência e estabilidade.
 
 ## ❓ Como instalar
 
-1. Baixe `TizenTube-L1-arm.apk` na página de [Releases](https://github.com/HeliumMarcos/TubeRush/releases).
-2. Instale na TV via gerenciador de arquivos ou ADB (`adb install -r TizenTube-L1-arm.apk`).
+1. Baixe `TubeRush-armv7.apk` na página de [Releases](https://github.com/HeliumMarcos/TubeRush/releases).
+2. Instale na TV via gerenciador de arquivos ou ADB (`adb install -r TubeRush-armv7.apk`).
 3. Abra o app **TubeRush**.
 
 ---

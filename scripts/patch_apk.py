@@ -13,7 +13,7 @@ REPO = Path(__file__).resolve().parent.parent
 ZIPALIGN = r"C:\Users\HeliumMarcos\Documents\Codex\2026-11-07\ana-2\work\android-tools\sdk\build-tools\34.0.0\zipalign.exe"
 APKSIGNER = r"C:\Users\HeliumMarcos\Documents\Codex\2026-11-07\ana-2\work\android-tools\sdk\build-tools\34.0.0\apksigner.bat"
 KEYSTORE = r"C:\Users\HeliumMarcos\.android\debug.keystore"
-DEFAULT_APK = Path(r"C:\Users\HeliumMarcos\Documents\ChatGPT\TizenTubeCobalt\work\recovery\TizenTube-L1-arm.apk")
+DEFAULT_APK = Path(r"C:\Users\HeliumMarcos\Documents\ChatGPT\TizenTubeCobalt\work\recovery\TubeRush-armv7.apk")
 
 parser = argparse.ArgumentParser(description="Patch TubeRush APK versionName, versionCode, and u.js ref")
 parser.add_argument("--version-name", required=True, help="e.g. 2.0.8")

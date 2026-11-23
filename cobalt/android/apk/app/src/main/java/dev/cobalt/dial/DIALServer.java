@@ -154,9 +154,9 @@ public class DIALServer {
       deviceName = Settings.Global.getString(context.getContentResolver(), "device_name");
     }
     if (deviceName == null || deviceName.isEmpty()) {
-      return "TizenTube";
+      return "TubeRush";
     }
-    return "TizenTube (" + deviceName + ")";
+    return "TubeRush (" + deviceName + ")";
   }
 
   public static String getDialUdn(Context context) {
